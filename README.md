@@ -4,6 +4,12 @@ Adds a factory for deploying Immutable ERC721 and ERC1155 contracts.
 
 ## Usage
 
+### Install
+
+```shell
+$ npm i
+```
+
 ### Build
 
 ```shell
