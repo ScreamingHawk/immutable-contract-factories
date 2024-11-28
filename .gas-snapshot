@@ -1,0 +1,2 @@
+ImmutableERC1155FactoryTest:test_Deploy(address,string,string,string,address,uint96) (runs: 257, μ: 3799886, ~: 3792784)
+ImmutableERC721FactoryTest:test_Deploy(address,string,string,string,string,address,uint96) (runs: 257, μ: 4701370, ~: 4704347)

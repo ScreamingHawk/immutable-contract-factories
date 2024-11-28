@@ -1,0 +1,9 @@
+{
+  "name": "immutable-contracts",
+  "version": "1.0.0",
+  "author": "Michael Standen <mstan@horizon.io>",
+  "private": true,
+  "dependencies": {
+    "@imtbl/contracts": "^2.2.14"
+  }
+}
