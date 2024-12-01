@@ -3,7 +3,6 @@ pragma solidity ^0.8.13;
 
 import {ImmutableERC1155} from "@imtbl/contracts/contracts/token/erc1155/preset/ImmutableERC1155.sol";
 import {IImmutableERC1155Factory} from "./interfaces/IImmutableERC1155Factory.sol";
-import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 
 contract ImmutableERC1155Factory is IImmutableERC1155Factory {
     function determineAddress(
@@ -15,15 +14,28 @@ contract ImmutableERC1155Factory is IImmutableERC1155Factory {
         address _receiver,
         uint96 _feeNumerator,
         bytes32 extraSalt_
-    ) public view returns (address) {
-        return Create2.computeAddress(
-            _computeSalt(owner, name_, baseURI_, contractURI_, _operatorAllowlist, _receiver, _feeNumerator, extraSalt_),
-            keccak256(
+    ) public view returns (address addr) {
+        bytes32 salt = _computeSalt(
+            owner, name_, baseURI_, contractURI_, _operatorAllowlist, _receiver, _feeNumerator, extraSalt_
+        );
+        bytes32 bytecodeHash = keccak256(
                 _computeCreationCode(
                     owner, name_, baseURI_, contractURI_, _operatorAllowlist, _receiver, _feeNumerator, extraSalt_
                 )
-            )
         );
+        address deployer = address(this);
+
+        // From OpenZeppelin's Create2.sol
+        assembly {
+            let ptr := mload(0x40)
+            mstore(add(ptr, 0x40), bytecodeHash)
+            mstore(add(ptr, 0x20), salt)
+            mstore(ptr, deployer)
+            let start := add(ptr, 0x0b)
+            mstore8(start, 0xff)
+            addr := keccak256(start, 85)
+        }
+        return addr;
     }
 
     function deploy(
@@ -35,19 +47,17 @@ contract ImmutableERC1155Factory is IImmutableERC1155Factory {
         address _receiver,
         uint96 _feeNumerator,
         bytes32 extraSalt_
-    ) public returns (address) {
+    ) public returns (address addr) {
         bytes32 salt =
             _computeSalt(owner, name_, baseURI_, contractURI_, _operatorAllowlist, _receiver, _feeNumerator, extraSalt_);
-
-        address token = Create2.deploy(
-            0,
-            salt,
-            _computeCreationCode(
-                owner, name_, baseURI_, contractURI_, _operatorAllowlist, _receiver, _feeNumerator, extraSalt_
-            )
+        bytes memory bytecode = _computeCreationCode(
+            owner, name_, baseURI_, contractURI_, _operatorAllowlist, _receiver, _feeNumerator, extraSalt_
         );
-        emit ImmutableERC1155Deployed(token);
-        return token;
+        assembly {
+            addr := create2(0, add(bytecode, 0x20), mload(bytecode), salt)
+        }
+        emit ImmutableERC1155Deployed(addr);
+        return addr;
     }
 
     function _computeCreationCode(
