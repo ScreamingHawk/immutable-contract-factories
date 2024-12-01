@@ -15,13 +15,12 @@ contract ImmutableERC1155Factory is IImmutableERC1155Factory {
         uint96 _feeNumerator,
         bytes32 extraSalt_
     ) public view returns (address addr) {
-        bytes32 salt = _computeSalt(
-            owner, name_, baseURI_, contractURI_, _operatorAllowlist, _receiver, _feeNumerator, extraSalt_
-        );
+        bytes32 salt =
+            _computeSalt(owner, name_, baseURI_, contractURI_, _operatorAllowlist, _receiver, _feeNumerator, extraSalt_);
         bytes32 bytecodeHash = keccak256(
-                _computeCreationCode(
-                    owner, name_, baseURI_, contractURI_, _operatorAllowlist, _receiver, _feeNumerator, extraSalt_
-                )
+            _computeCreationCode(
+                owner, name_, baseURI_, contractURI_, _operatorAllowlist, _receiver, _feeNumerator, extraSalt_
+            )
         );
         address deployer = address(this);
 
