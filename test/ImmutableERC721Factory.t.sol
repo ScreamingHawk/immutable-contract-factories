@@ -2,11 +2,12 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
+import {IImmutableERC721FactorySignals} from "../src/interfaces/IImmutableERC721Factory.sol";
 import {ImmutableERC721Factory, ImmutableERC721} from "../src/ImmutableERC721Factory.sol";
 
 import {OperatorAllowlistUpgradeable} from "@imtbl/contracts/contracts/allowlist/OperatorAllowlistUpgradeable.sol";
 
-contract ImmutableERC721FactoryTest is Test {
+contract ImmutableERC721FactoryTest is Test, IImmutableERC721FactorySignals {
     ImmutableERC721Factory public factory;
     OperatorAllowlistUpgradeable public operatorAllowlist;
 
@@ -22,13 +23,37 @@ contract ImmutableERC721FactoryTest is Test {
         string memory baseURI_,
         string memory contractURI_,
         address royaltyReceiver_,
-        uint96 feeNumerator_
+        uint96 feeNumerator_,
+        bytes32 extraSalt_
     ) public {
         feeNumerator_ = uint96(bound(feeNumerator_, 0, 10000));
-        address tokenAddr = factory.deploy(
-            owner_, name_, symbol_, baseURI_, contractURI_, address(operatorAllowlist), royaltyReceiver_, feeNumerator_
+
+        address expectedAddress = factory.determineAddress(
+            owner_,
+            name_,
+            symbol_,
+            baseURI_,
+            contractURI_,
+            address(operatorAllowlist),
+            royaltyReceiver_,
+            feeNumerator_,
+            extraSalt_
         );
-        assertNotEq(tokenAddr, address(0));
+
+        vm.expectEmit(address(factory));
+        emit ImmutableERC721Deployed(expectedAddress);
+        address tokenAddr = factory.deploy(
+            owner_,
+            name_,
+            symbol_,
+            baseURI_,
+            contractURI_,
+            address(operatorAllowlist),
+            royaltyReceiver_,
+            feeNumerator_,
+            extraSalt_
+        );
+        assertEq(tokenAddr, expectedAddress);
 
         // Assert values set correctly
         ImmutableERC721 token = ImmutableERC721(tokenAddr);
